@@ -1,4 +1,4 @@
-export { createStorage } from "./core/storage";
+export { createStorage } from './core/storage';
 export type {
   StorageInterface,
   StorageAdapter,
@@ -7,6 +7,7 @@ export type {
   JSONValue,
   JSONObject,
   JSONArray,
-} from "./core/types";
-export type { SimpleStoreErrorCode } from "./core/errors";
-export { SimpleStoreError } from "./core/errors";
+} from './core/types';
+export type { SimpleStoreErrorCode } from './core/errors';
+export { SimpleStoreError } from './core/errors';
+export { memoryAdapter } from './adapters/memory';

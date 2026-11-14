@@ -1,8 +1,8 @@
-import { createStorage } from "./core/storage";
-import { webAdapter } from "./adapters/web";
-import type { StorageInterface } from "./core/types";
+import { createStorage } from './core/storage';
+import { webAdapter } from './adapters/web';
 
+export * from './index';
 export { webAdapter };
-export type { StorageInterface };
 
+/** Ready-to-use localStorage-backed storage. */
 export const storage = createStorage({ adapter: webAdapter() });

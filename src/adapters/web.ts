@@ -1,84 +1,62 @@
-import { StorageAdapter } from "../core/types";
+import { StorageAdapter } from '../core/types';
 
-let cachedStorage: Storage | null = null;
-let storageUnavailable: boolean | null = null;
-
-function getLocalStorage(): Storage | null {
-  // Never access window/localStorage at module load — SSR-safe.
-  // Resolution happens lazily on first method call.
-  if (storageUnavailable === true) {
-    return null;
-  }
-  if (cachedStorage !== null) {
-    return cachedStorage;
-  }
-
-  try {
-    if (
-      typeof window !== "undefined" &&
-      window.localStorage !== undefined
-    ) {
-      cachedStorage = window.localStorage;
-      return cachedStorage;
-    }
-    storageUnavailable = true;
-    return null;
-  } catch {
-    storageUnavailable = true;
-    return null;
-  }
-}
-
-function unavailableError(): Error {
-  const err = new Error(
-    "localStorage is unavailable in this environment"
-  ) as Error & { name?: string };
-  err.name = "SecurityError";
+function unavailableError(type: string): Error {
+  const err = new Error(`${type}Storage is unavailable in this environment`);
+  err.name = 'SecurityError';
   return err;
 }
 
-export function webAdapter(): StorageAdapter {
+/** Browser adapter backed by localStorage (default) or sessionStorage. */
+export function webAdapter(type: 'local' | 'session' = 'local'): StorageAdapter {
+  let cached: Storage | null | undefined;
+
+  // Never access window at module load or adapter creation — SSR-safe.
+  // Resolution happens lazily on first method call.
+  function getStore(): Storage | null {
+    if (cached !== undefined) {
+      return cached;
+    }
+    try {
+      cached =
+        typeof window !== 'undefined'
+          ? (window[type === 'local' ? 'localStorage' : 'sessionStorage'] ?? null)
+          : null;
+    } catch {
+      // Accessing storage throws in some sandboxed iframes / privacy modes.
+      cached = null;
+    }
+    return cached;
+  }
+
   return {
     async getItem(key: string): Promise<string | null> {
-      const storage = getLocalStorage();
-      if (!storage) {
-        return null;
-      }
-      return storage.getItem(key);
+      return getStore()?.getItem(key) ?? null;
     },
 
     async setItem(key: string, value: string): Promise<void> {
-      const storage = getLocalStorage();
-      if (!storage) {
-        throw unavailableError();
+      const store = getStore();
+      if (!store) {
+        throw unavailableError(type);
       }
-      storage.setItem(key, value);
+      store.setItem(key, value);
     },
 
     async removeItem(key: string): Promise<void> {
-      const storage = getLocalStorage();
-      if (!storage) {
-        return;
-      }
-      storage.removeItem(key);
+      getStore()?.removeItem(key);
     },
 
     async clear(): Promise<void> {
-      const storage = getLocalStorage();
-      if (!storage) {
-        return;
-      }
-      storage.clear();
+      getStore()?.clear();
     },
 
     async getAllKeys(): Promise<string[]> {
-      const storage = getLocalStorage();
-      if (!storage) {
+      const store = getStore();
+      if (!store) {
         return [];
       }
       const keys: string[] = [];
-      for (let i = 0; i < storage.length; i++) {
-        const key = storage.key(i);
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i);
         if (key !== null) {
           keys.push(key);
         }

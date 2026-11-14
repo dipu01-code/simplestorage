@@ -1,10 +1,4 @@
-export type JSONValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JSONObject
-  | JSONArray;
+export type JSONValue = string | number | boolean | null | JSONObject | JSONArray;
 
 export interface JSONObject {
   [key: string]: JSONValue;
@@ -22,6 +16,8 @@ export interface StorageAdapter {
 
 export interface StorageConfig {
   adapter: StorageAdapter;
+  /** Namespace prepended to every key. When set, keys() and clear() only touch keys with this prefix. */
+  prefix?: string;
 }
 
 export interface MultiGetResult<T = unknown> {
@@ -35,7 +31,7 @@ export interface StorageInterface {
   has(key: string): Promise<boolean>;
   remove(key: string): Promise<void>;
   clear(): Promise<void>;
-  getAllKeys(): Promise<string[]>;
+  keys(): Promise<string[]>;
   multiSet<T = unknown>(items: Array<[string, T]>): Promise<void>;
   multiGet<T = unknown>(keys: string[]): Promise<Array<MultiGetResult<T>>>;
 }
